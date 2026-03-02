@@ -53,12 +53,13 @@ export default function Results() {
                   }
 
                   // Styled labels
-                  // If line starts with Title:, treat it as a heading
+                  // Remove "Title:" completely from results
 if (trimmed.startsWith("Title:")) {
-  const cleanTitle = trimmed.replace("Title:", "").trim()
+    // Remove the word "Title:" from the line
+  const cleanText = trimmed.replace(/^Title:\s*/i, "").trim()
   return (
     <h3 key={i} className="text-lg font-semibold">
-      {cleanTitle}
+      {cleanText}
     </h3>
   )
 }
