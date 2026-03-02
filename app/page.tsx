@@ -49,8 +49,6 @@ export default function Home() {
       alert("Please enter a valid work email")
       return
     }
-
-    // Convert string inputs to numeric scores
     const maturityScore = mapMaturityToScore(formData.maturity)
     const trafficScore = mapTrafficRangeToNumber(formData.trafficRange)
 
@@ -151,7 +149,7 @@ export default function Home() {
           <QuestionBlock
             title="What best describes your role?"
             options={["Product Manager","Growth Marketer","CRO Manager","Head of Digital","Founder"]}
-            onSelect={(value) => handleSelect("role", value)}
+            onSelect={(value: string) => handleSelect("role", value)}
           />
         )}
 
@@ -160,7 +158,7 @@ export default function Home() {
           <QuestionBlock
             title="What industry are you in?"
             options={["Ecommerce","SaaS","Fintech","EdTech","Media","B2B Services"]}
-            onSelect={(value) => handleSelect("industry", value)}
+            onSelect={(value: string) => handleSelect("industry", value)}
           />
         )}
 
@@ -169,7 +167,7 @@ export default function Home() {
           <QuestionBlock
             title="What’s your approximate monthly website traffic?"
             options={["Less than 25,000","25,000 – 100,000","100,000 – 500,000","500,000+"]}
-            onSelect={(value) => handleSelect("trafficRange", value)}
+            onSelect={(value: string) => handleSelect("trafficRange", value)}
           />
         )}
 
@@ -178,7 +176,7 @@ export default function Home() {
           <QuestionBlock
             title="What are you most focused on improving right now?"
             options={["Overall conversion rate","Revenue per visitor","Lead generation","Activation / onboarding","Retention","Feature adoption"]}
-            onSelect={(value) => handleSelect("goal", value)}
+            onSelect={(value: string) => handleSelect("goal", value)}
           />
         )}
 
@@ -310,12 +308,12 @@ function mapTrafficRangeToNumber(range: string): number {
 // =======================
 // UI COMPONENTS
 // =======================
-function QuestionBlock({ title, options, onSelect }: any) {
+function QuestionBlock({ title, options, onSelect }: { title: string, options: string[], onSelect: (value: string) => void }) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-center mb-6">{title}</h2>
       <div className="space-y-4">
-        {options.map((option: string) => (
+        {options.map((option) => (
           <button
             key={option}
             onClick={() => onSelect(option)}
@@ -329,13 +327,11 @@ function QuestionBlock({ title, options, onSelect }: any) {
   )
 }
 
-function Toggle({ label, value, onChange }: any) {
+function Toggle({ label, value, onChange }: { label: string, value: boolean, onChange: () => void }) {
   return (
     <div
       onClick={onChange}
-      className={`border rounded-md p-4 cursor-pointer transition ${
-        value ? "border-black bg-gray-50" : "border-gray-300"
-      }`}
+      className={`border rounded-md p-4 cursor-pointer transition ${value ? "border-black bg-gray-50" : "border-gray-300"}`}
     >
       {label}
     </div>
