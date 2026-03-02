@@ -1,21 +1,54 @@
 export const runtime = "nodejs"
 
 import OpenAI from "openai"
-import { calculateMaturity } from "@/lib/maturity"
-import { getRoleFocus } from "@/lib/roleLogic"
-import { getIndustryUseCases } from "@/lib/industryLogic"
 
+// =======================
+// TYPE DEFINITIONS
+// =======================
+type RequestBody = {
+  role: string
+  industry: string
+  companySize?: string
+  maturityScore: number
+  trafficScore: number
+  monthlyTraffic: number
+  conversionRate: number
+  aov: number
+}
+
+// =======================
+// HELPER FUNCTIONS
+// =======================
+function getMaturityLevel(score: number): string {
+  if (score <= 3) return "Beginner"
+  if (score <= 7) return "Intermediate"
+  return "Advanced"
+}
+
+function getTrafficCategory(score: number): string {
+  if (score <= 3) return "Low traffic"
+  if (score <= 7) return "Medium traffic"
+  return "High traffic"
+}
+
+// =======================
+// API ROUTE
+// =======================
 export async function POST(req: Request) {
   try {
-    const { role, industry, companySize, answers } = await req.json()
+    const {
+      role,
+      industry,
+      companySize = "Unknown",
+      maturityScore,
+      trafficScore,
+      monthlyTraffic,
+      conversionRate,
+      aov,
+    }: RequestBody = await req.json()
 
-    const maturityScore = calculateMaturity({ maturity: answers })
-    const maturityLevel =
-      maturityScore <= 3
-        ? "Beginner"
-        : maturityScore <= 7
-        ? "Intermediate"
-        : "Advanced"
+    const maturityLevel = getMaturityLevel(maturityScore)
+    const trafficCategory = getTrafficCategory(trafficScore)
 
     const client = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
@@ -32,6 +65,10 @@ Industry: ${industry}
 Company Size: ${companySize}
 Experimentation Maturity Score: ${maturityScore}/10
 Maturity Level: ${maturityLevel}
+Traffic Category: ${trafficCategory}
+Monthly Traffic: ${monthlyTraffic}
+Conversion Rate (%): ${conversionRate}
+Average Order Value / ACV: ${aov}
 
 Create a comprehensive, executive-ready experimentation strategy.
 
