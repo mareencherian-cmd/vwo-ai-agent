@@ -53,10 +53,12 @@ export default function Results() {
                   }
 
                   // Styled labels
-                  // Remove "Title:" completely from results
-if (trimmed.startsWith("Title:")) {
-    // Remove the word "Title:" from the line
-  const cleanText = trimmed.replace(/^Title:\s*/i, "").trim()
+                 // Remove "Title:" completely from results
+if (trimmed.match(/^\**Title:\**/i)) {
+  const cleanText = trimmed
+    .replace(/^\**Title:\**\s*/i, "")
+    .trim()
+
   return (
     <h3 key={i} className="text-lg font-semibold">
       {cleanText}
@@ -64,13 +66,15 @@ if (trimmed.startsWith("Title:")) {
   )
 }
 
-// Styled label lines (excluding Title now)
+// Styled label lines
 if (
   trimmed.match(
-    /^(Why it matters|Expected impact|Effort|Priority Score):/
+    /^\**(Why it matters|Expected impact|Effort|Priority Score):\**/
   )
 ) {
-  const [label, ...rest] = trimmed.split(":")
+  const clean = trimmed.replace(/\*\*/g, "")
+  const [label, ...rest] = clean.split(":")
+
   return (
     <p key={i} className="text-sm">
       <span className="font-medium">{label}:</span>
