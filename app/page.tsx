@@ -5,6 +5,8 @@ import { useState } from "react"
 type FormData = {
   role: string
   industry: string
+  platform: string
+  userJourney: string
   trafficRange: string
   goal: string
   maturity: string
@@ -23,6 +25,8 @@ export default function Home() {
   const [formData, setFormData] = useState<FormData>({
     role: "",
     industry: "",
+    platform: "",
+    userJourney: "",
     trafficRange: "",
     goal: "",
     maturity: "",
@@ -161,6 +165,31 @@ export default function Home() {
             onSelect={(value: string) => handleSelect("industry", value)}
           />
         )}
+
+        {/* STEP 3 — PLATFORM */}
+{step === 3 && (
+  <QuestionBlock
+    title="Which platform are you optimizing?"
+    options={["Web","Mobile App","Both"]}
+    onSelect={(value: string) => handleSelect("platform", value)}
+  />
+)}
+
+{/* STEP 4 — USER JOURNEY */}
+{step === 4 && (
+  <QuestionBlock
+    title="Which user journey do you want to improve?"
+    options={[
+      "Homepage → Signup",
+      "Product Discovery",
+      "Pricing → Conversion",
+      "User Onboarding",
+      "Cart → Checkout",
+      "Content Engagement"
+    ]}
+    onSelect={(value: string) => handleSelect("userJourney", value)}
+  />
+)}
 
         {/* STEP 3 — TRAFFIC RANGE */}
         {step === 3 && (
