@@ -7,7 +7,6 @@ type FormData = {
   industry: string
   platform: string
   userJourney: string
-  trafficRange: string
   goal: string
   maturity: string
   usesHeatmaps: boolean
@@ -18,16 +17,62 @@ type FormData = {
   aov: string
 }
 
+const journeyOptionsByIndustry: Record<string, string[]> = {
+  Ecommerce: [
+    "Homepage → Product Discovery",
+    "Product Page → Add to Cart",
+    "Cart → Checkout",
+    "Checkout → Payment Completion",
+    "Repeat Purchase / Loyalty"
+  ],
+  SaaS: [
+    "Homepage → Signup",
+    "Signup → Activation",
+    "User Onboarding",
+    "Feature Adoption",
+    "Upgrade to Paid"
+  ],
+  Fintech: [
+    "Landing Page → Account Signup",
+    "KYC Completion",
+    "First Transaction",
+    "Product Adoption",
+    "Retention / Engagement"
+  ],
+  EdTech: [
+    "Landing Page → Course Discovery",
+    "Course Page → Enrollment",
+    "User Onboarding",
+    "Lesson Completion",
+    "Subscription Renewal"
+  ],
+  Media: [
+    "Homepage → Content Discovery",
+    "Article → Deeper Engagement",
+    "Content → Newsletter Signup",
+    "Ad Engagement",
+    "Returning Visitors"
+  ],
+  "B2B Services": [
+    "Landing Page → Lead Capture",
+    "Content → Demo Request",
+    "Pricing Page → Contact Sales",
+    "Lead Qualification",
+    "Demo → Opportunity"
+  ]
+}
+
 export default function Home() {
   const totalSteps = 7
+
   const [email, setEmail] = useState("")
   const [step, setStep] = useState(0)
+
   const [formData, setFormData] = useState<FormData>({
     role: "",
     industry: "",
     platform: "",
     userJourney: "",
-    trafficRange: "",
     goal: "",
     maturity: "",
     usesHeatmaps: false,
@@ -48,19 +93,25 @@ export default function Home() {
 
   const progressPercent = (step / totalSteps) * 100
 
+  const journeyOptions =
+    journeyOptionsByIndustry[formData.industry] || [
+      "Homepage → Signup",
+      "User Onboarding",
+      "Conversion Optimization"
+    ]
+
   const handleGenerateStrategy = async () => {
     if (!email || !email.includes("@")) {
       alert("Please enter a valid work email")
       return
     }
+
     const maturityScore = mapMaturityToScore(formData.maturity)
-    const trafficScore = mapTrafficRangeToNumber(formData.trafficRange)
 
     const payload = {
       ...formData,
       email,
       maturityScore,
-      trafficScore,
       monthlyTraffic: Number(formData.monthlyTraffic) || 0,
       conversionRate: Number(formData.conversionRate) || 0,
       aov: Number(formData.aov) || 0,
@@ -72,17 +123,9 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-
-      if (!res.ok) {
-        const text = await res.text()
-        console.error("API Error:", text)
-        alert("API error. Check terminal.")
-        return
-      }
-
+      
       const data = await res.json()
 
-      // Capture lead silently
       await fetch("/api/capture-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,21 +133,24 @@ export default function Home() {
           email,
           role: formData.role,
           industry: formData.industry,
+          platform: formData.platform,
+          userJourney: formData.userJourney,
           goal: formData.goal,
         }),
       })
 
       localStorage.setItem("strategyResult", data.result)
       window.location.href = "/results"
+
     } catch (error) {
       console.error(error)
-      alert("Something went wrong. Please try again.")
+      alert("Something went wrong.")
     }
   }
 
   return (
     <main className="min-h-screen bg-white text-black flex flex-col items-center px-6">
-      {/* Progress Bar */}
+
       {step > 0 && (
         <div className="w-full fixed top-0 left-0 h-1 bg-gray-200">
           <div
@@ -115,20 +161,17 @@ export default function Home() {
       )}
 
       <div className="max-w-2xl w-full mt-24 mb-16">
-        {/* STEP 0 — LANDING */}
+
+        {/* STEP 0 */}
         {step === 0 && (
           <div className="text-center space-y-8">
-            <h1 className="text-4xl md:text-5xl font-semibold leading-tight">
+
+            <h1 className="text-4xl font-semibold">
               Get Your AI-Powered Experimentation Strategy
             </h1>
 
-            <p className="text-lg text-gray-700 max-w-xl mx-auto">
-              Answer a few quick questions about your company and goals.
-              We’ll generate a tailored testing, personalization, and insights roadmap.
-            </p>
-
-            <p className="text-sm text-gray-500">
-              Built for teams serious about experimentation.
+            <p className="text-gray-600">
+              Answer a few quick questions and we’ll generate a tailored testing roadmap.
             </p>
 
             <input
@@ -136,211 +179,192 @@ export default function Home() {
               placeholder="Work Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
               className="w-full border rounded-lg px-4 py-3"
             />
+
             <button
               onClick={nextStep}
-              className="mt-6 bg-black text-white px-8 py-4 rounded-md text-lg font-medium hover:opacity-90 transition"
+              className="bg-black text-white px-8 py-4 rounded-md"
             >
               Start My Strategy
             </button>
+
           </div>
         )}
 
-        {/* STEP 1 — ROLE */}
+        {/* STEP 1 */}
         {step === 1 && (
           <QuestionBlock
             title="What best describes your role?"
-            options={["Product Manager","Growth Marketer","CRO Manager","Head of Digital","Founder"]}
+            options={[
+              "Product Manager",
+              "Growth Marketer",
+              "CRO Manager",
+              "Head of Digital",
+              "Founder"
+            ]}
             onSelect={(value: string) => handleSelect("role", value)}
           />
         )}
 
-        {/* STEP 2 — INDUSTRY */}
+        {/* STEP 2 */}
         {step === 2 && (
           <QuestionBlock
             title="What industry are you in?"
-            options={["Ecommerce","SaaS","Fintech","EdTech","Media","B2B Services"]}
+            options={[
+              "Ecommerce",
+              "SaaS",
+              "Fintech",
+              "EdTech",
+              "Media",
+              "B2B Services"
+            ]}
             onSelect={(value: string) => handleSelect("industry", value)}
           />
         )}
 
-        {/* STEP 3 — PLATFORM */}
-{step === 3 && (
-  <QuestionBlock
-    title="Which platform are you optimizing?"
-    options={["Web","Mobile App","Both"]}
-    onSelect={(value: string) => handleSelect("platform", value)}
-  />
-)}
-
-{/* STEP 4 — USER JOURNEY */}
-{step === 4 && (
-  <QuestionBlock
-    title="Which user journey do you want to improve?"
-    options={[
-      "Homepage → Signup",
-      "Product Discovery",
-      "Pricing → Conversion",
-      "User Onboarding",
-      "Cart → Checkout",
-      "Content Engagement"
-    ]}
-    onSelect={(value: string) => handleSelect("userJourney", value)}
-  />
-)}
-
-        {/* STEP 3 — TRAFFIC RANGE */}
+        {/* STEP 3 */}
         {step === 3 && (
           <QuestionBlock
-            title="What’s your approximate monthly website traffic?"
-            options={["Less than 25,000","25,000 – 100,000","100,000 – 500,000","500,000+"]}
-            onSelect={(value: string) => handleSelect("trafficRange", value)}
+            title="Which platform are you optimizing?"
+            options={["Web", "Mobile App", "Both"]}
+            onSelect={(value: string) => handleSelect("platform", value)}
           />
         )}
 
-        {/* STEP 4 — GOAL */}
+        {/* STEP 4 */}
         {step === 4 && (
           <QuestionBlock
-            title="What are you most focused on improving right now?"
-            options={["Overall conversion rate","Revenue per visitor","Lead generation","Activation / onboarding","Retention","Feature adoption"]}
+            title="Which user journey do you want to improve?"
+            options={journeyOptions}
+            onSelect={(value: string) => handleSelect("userJourney", value)}
+          />
+        )}
+
+        {/* STEP 5 */}
+        {step === 5 && (
+          <QuestionBlock
+            title="What are you most focused on improving?"
+            options={[
+              "Overall conversion rate",
+              "Revenue per visitor",
+              "Lead generation",
+              "Activation",
+              "Retention",
+              "Feature adoption"
+            ]}
             onSelect={(value: string) => handleSelect("goal", value)}
           />
         )}
 
-        {/* STEP 5 — MATURITY */}
-        {step === 5 && (
+        {/* STEP 6 */}
+        {step === 6 && (
           <div className="space-y-8">
+
             <h2 className="text-2xl font-semibold text-center">
-              How would you describe your experimentation program today?
+              How mature is your experimentation program?
             </h2>
 
-            <div className="space-y-4">
-              {[
-                "We rarely run A/B tests",
-                "We run occasional tests",
-                "We test regularly but without deep segmentation",
-                "We run a structured experimentation program"
-              ].map((option) => (
-                <button
-                  key={option}
-                  onClick={() => handleSelect("maturity", option)}
-                  className="w-full border border-gray-300 rounded-md p-4 text-left hover:border-black transition"
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
+            {[
+              "We rarely run A/B tests",
+              "We run occasional tests",
+              "We test regularly",
+              "We run a structured experimentation program"
+            ].map((option) => (
+              <button
+                key={option}
+                onClick={() => handleSelect("maturity", option)}
+                className="w-full border p-4 text-left rounded-md"
+              >
+                {option}
+              </button>
+            ))}
 
-            <div className="space-y-3 pt-4">
-              <Toggle
-                label="We use heatmaps or session recordings"
-                value={formData.usesHeatmaps}
-                onChange={() => setFormData({ ...formData, usesHeatmaps: !formData.usesHeatmaps })}
-              />
-              <Toggle
-                label="We analyze funnels and drop-offs"
-                value={formData.usesFunnels}
-                onChange={() => setFormData({ ...formData, usesFunnels: !formData.usesFunnels })}
-              />
-              <Toggle
-                label="We personalize experiences by audience"
-                value={formData.usesPersonalization}
-                onChange={() => setFormData({ ...formData, usesPersonalization: !formData.usesPersonalization })}
-              />
-            </div>
-
-            <button
-              onClick={nextStep}
-              className="bg-black text-white px-6 py-3 rounded-md mt-6"
-            >
-              Continue
-            </button>
           </div>
         )}
 
-        {/* STEP 6 — OPTIONAL REVENUE INPUT */}
-        {step === 6 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-center">
-              Want a directional revenue impact estimate?
+        {/* STEP 7 */}
+        {step === 7 && (
+          <div className="space-y-4">
+
+            <h2 className="text-xl font-semibold text-center">
+              Optional: estimate revenue impact
             </h2>
 
-            <div className="space-y-4">
-              <input
-                placeholder="Monthly traffic"
-                type="number"
-                className="w-full border p-3 rounded-md"
-                onChange={(e) => setFormData({ ...formData, monthlyTraffic: e.target.value })}
-              />
-              <input
-                placeholder="Conversion rate (%)"
-                type="number"
-                className="w-full border p-3 rounded-md"
-                onChange={(e) => setFormData({ ...formData, conversionRate: e.target.value })}
-              />
-              <input
-                placeholder="Average order value / ACV"
-                type="number"
-                className="w-full border p-3 rounded-md"
-                onChange={(e) => setFormData({ ...formData, aov: e.target.value })}
-              />
-            </div>
+            <input
+              placeholder="Monthly traffic"
+              type="number"
+              className="w-full border p-3 rounded-md"
+              onChange={(e) =>
+                setFormData({ ...formData, monthlyTraffic: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Conversion rate (%)"
+              type="number"
+              className="w-full border p-3 rounded-md"
+              onChange={(e) =>
+                setFormData({ ...formData, conversionRate: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Average order value"
+              type="number"
+              className="w-full border p-3 rounded-md"
+              onChange={(e) =>
+                setFormData({ ...formData, aov: e.target.value })
+              }
+            />
 
             <button
               onClick={handleGenerateStrategy}
               className="bg-black text-white px-6 py-3 rounded-md mt-6"
             >
-              Generate My Strategy
+              Generate Strategy
             </button>
+
           </div>
         )}
 
-        {/* Back Button */}
         {step > 0 && step < totalSteps && (
           <button
             onClick={prevStep}
-            className="mt-8 text-sm text-gray-500 hover:text-black"
+            className="mt-8 text-sm text-gray-500"
           >
             Back
           </button>
         )}
+
       </div>
     </main>
   )
 }
 
-// =======================
-// MAPPING FUNCTIONS
-// =======================
 function mapMaturityToScore(maturity: string): number {
   switch (maturity) {
     case "We rarely run A/B tests": return 1
     case "We run occasional tests": return 3
-    case "We test regularly but without deep segmentation": return 5
+    case "We test regularly": return 5
     case "We run a structured experimentation program": return 8
     default: return 0
   }
 }
 
-function mapTrafficRangeToNumber(range: string): number {
-  switch (range) {
-    case "Less than 25,000": return 1
-    case "25,000 – 100,000": return 3
-    case "100,000 – 500,000": return 5
-    case "500,000+": return 8
-    default: return 0
-  }
-}
-
-// =======================
-// UI COMPONENTS
-// =======================
-function QuestionBlock({ title, options, onSelect }: { title: string, options: string[], onSelect: (value: string) => void }) {
+function QuestionBlock({
+  title,
+  options,
+  onSelect,
+}: {
+  title: string
+  options: string[]
+  onSelect: (value: string) => void
+}) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-center mb-6">{title}</h2>
+      <h2 className="text-2xl font-semibold text-center">{title}</h2>
+
       <div className="space-y-4">
         {options.map((option) => (
           <button
@@ -352,17 +376,6 @@ function QuestionBlock({ title, options, onSelect }: { title: string, options: s
           </button>
         ))}
       </div>
-    </div>
-  )
-}
-
-function Toggle({ label, value, onChange }: { label: string, value: boolean, onChange: () => void }) {
-  return (
-    <div
-      onClick={onChange}
-      className={`border rounded-md p-4 cursor-pointer transition ${value ? "border-black bg-gray-50" : "border-gray-300"}`}
-    >
-      {label}
     </div>
   )
 }
